@@ -1,0 +1,256 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class CPUSimulator {
+    private static final int MEMORY_SIZE = 32;
+    private static final int PROGRAM_SIZE = 4;
+    private static final int PROGRAM_START_ADDRESS = 0;
+    private static final int DATA_START_ADDRESS = PROGRAM_SIZE;
+
+    private byte[] memory;
+    private byte ayb;
+    private byte ben;
+    private byte gim;
+    private byte da;
+    private byte ec;
+    private byte za;
+    private byte gh;
+
+    public CPUSimulator() {
+        memory = new byte[MEMORY_SIZE];
+        ayb = 0;
+        ben = 0;
+        gim = 0;
+        da = 0;
+        ec = 0;
+        za = 0;
+        gh = PROGRAM_START_ADDRESS;
+    }
+
+    public void loadProgram(String filename) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filename));
+        String line;
+        int address = PROGRAM_START_ADDRESS;
+        while ((line = reader.readLine()) != null) {
+            memory[address] = Byte.parseByte(line);
+            address++;
+        }
+        reader.close();
+    }
+
+    public void dumpMemory() {
+        for (int i = 0; i < MEMORY_SIZE; i++) {
+            System.out.println("[" + i + "]: " + memory[i]);
+        }
+    }
+
+    public void executeProgram() {
+        while (gh < DATA_START_ADDRESS) {
+            byte instruction = memory[gh];
+            gh++;
+
+            switch (instruction) {
+                case 0: 
+                    byte source = memory[gh];
+                    gh++;
+                    byte destination = memory[gh];
+                    gh++;
+                    mov(source, destination);
+                    break;
+                case 1: 
+                    byte operand = memory[gh];
+                    gh++;
+                    add(operand);
+                    break;
+                case 2: 
+                    operand = memory[gh];
+                    gh++;
+                    sub(operand);
+                    break;
+                case 3: 
+                    operand = memory[gh];
+                    gh++;
+                    mul(operand);
+                    break;
+                case 4: 
+                    operand = memory[gh];
+                    gh++;
+                    div(operand);
+                    break;
+                case 5:
+                    operand = memory[gh];
+                    gh++;
+                    and(operand);
+                    break;
+                case 6: 
+                    operand = memory[gh];
+                    gh++;
+                    or(operand);
+                    break;
+                case 7: 
+                    not();
+                    break;
+                case 8: 
+                    byte value1 = memory[gh];
+                    gh++;
+                    byte value2 = memory[gh];
+                    gh++;
+                    cmp(value1, value2);
+                    break;
+                case 9: 
+                    byte address = memory[gh];
+                    gh++;
+                    jmp(address);
+                    break;
+                case 10: 
+                    address = memory[gh];
+                    gh++;
+                    jg(address);
+                    break;
+                case 11:
+                    address = memory[gh];
+                    gh++;
+                    jl(address);
+                    break;
+                case 12: 
+                    address = memory[gh];
+                    gh++;
+                    je(address);
+                    break;
+                default:
+                    System.out.println("Invalid instruction: " + instruction);
+            }
+        }
+    }
+
+    private void mov(byte source, byte destination) {
+        switch (destination) {
+            case 0: 
+                ayb = getValue(source);
+                break;
+            case 1: 
+                ben = getValue(source);
+                break;
+            case 2: 
+                gim = getValue(source);
+                break;
+            case 3:
+                da = getValue(source);
+                break;
+            case 4: 
+                ec = getValue(source);
+                break;
+            case 5: 
+                za = getValue(source);
+                break;
+            default:
+                System.out.println("Invalid register: " + destination);
+        }
+    }
+
+    private void add(byte operand) {
+        ayb = (byte) (ayb + getValue(operand));
+    }
+
+    private void sub(byte operand) {
+        ayb = (byte) (ayb - getValue(operand));
+    }
+
+    private void mul(byte operand) {
+        ayb = (byte) (ayb * getValue(operand));
+    }
+
+    private void div(byte operand) {
+        ayb = (byte) (ayb / getValue(operand));
+    }
+
+    private void and(byte operand) {
+        ayb = (byte) (ayb & getValue(operand));
+    }
+
+    private void or(byte operand) {
+        ayb = (byte) (ayb | getValue(operand));
+    }
+
+    private void not() {
+        ayb = (byte) ~ayb;
+    }
+
+    private void cmp(byte value1, byte value2) {
+        byte result = (byte) (getValue(value1) - getValue(value2));
+        if (result > 0) {
+            da = 1;
+        } else if (result < 0) {
+            da = -1; 
+        } else {
+            da = 0; 
+        }
+    }
+
+    private void jmp(byte address) {
+        gh = getDataAddress(address);
+    }
+
+    private void jg(byte address) {
+        if (da > 0) {
+            gh = getDataAddress(address);
+        }
+    }
+
+    private void jl(byte address) {
+        if (da < 0) {
+            gh = getDataAddress(address);
+        }
+    }
+
+    private void je(byte address) {
+        if (da == 0) {
+            gh = getDataAddress(address);
+        }
+    }
+
+    private byte getValue(byte operand) {
+        if (operand < DATA_START_ADDRESS) {
+            switch (operand) {
+                case 0: 
+                    return ayb;
+                case 1: 
+                    return ben;
+                case 2: 
+                    return gim;
+                case 3: 
+                    return da;
+                case 4: 
+                    return ec;
+                case 5: 
+                    return za;
+                default:
+                    System.out.println("Invalid register: " + operand);
+                    return 0;
+            }
+        } else {
+            return memory[getDataAddress(operand)];
+        }
+    }
+
+    private int getDataAddress(byte address) {
+        return address + DATA_START_ADDRESS;
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.out.println("Usage: java CPUSimulator <input_file>");
+            return;
+        }
+
+        CPUSimulator cpu = new CPUSimulator();
+        try {
+            cpu.loadProgram(args[0]);
+            cpu.executeProgram();
+            cpu.dumpMemory();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
