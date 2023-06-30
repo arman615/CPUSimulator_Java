@@ -10,5 +10,7 @@ stored in memory and performs operations accordingly. This simulator can be used
 # Useage
 The simulator expects a file containing the program instructions as input. The program instructions should be written as a series of integers, 
 each representing an instruction. Each instruction should be on a separate line.
+
 ||
+
 To use this program, you need to provide an input file containing assembly code as a command-line argument. Each instruction should be represented by a single byte value in the file.
